@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Deepak_Kumar_TarkibiTact/SMS_Count_reader</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0b0f1a; --bg2:#111827; --bg3:#1e293b; --bg4:#0f1117;
+  --border:#1e293b; --border2:#334155;
+  --text:#e2e8f0; --muted:#64748b; --muted2:#475569;
+  --dv01:#f59e0b; --pu01:#38bdf8; --pu02:#a78bfa;
+  --ok:#22c55e; --err:#ef4444;
+  --radius:12px;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 60px;}
+
+/* ─── HEADER ─────────────────────────────── */
+.page-header{text-align:center;margin-bottom:26px;}
+.page-header h1{
+  font-size:1.8rem;font-weight:800;
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;
+}
+.page-header p{color:var(--muted);font-size:0.85rem;}
+
+/* ─── DROP ZONE ──────────────────────────── */
+#drop-zone{
+  border:2px dashed var(--border2);border-radius:14px;padding:36px 24px;
+  text-align:center;cursor:pointer;transition:all .3s;
+  background:var(--bg3);max-width:960px;margin:0 auto 20px;
+}
+#drop-zone.dragover{border-color:#38bdf8;background:#1a2f4a;transform:scale(1.005);box-shadow:0 0 28px rgba(56,189,248,.18);}
+.drop-icon{font-size:2.8rem;display:block;margin-bottom:10px;}
+.drop-title{font-size:1.05rem;font-weight:600;color:#cbd5e1;margin-bottom:5px;}
+.drop-hint{font-size:0.78rem;color:var(--muted);}
+#file-input{display:none;}
+.browse-btn{
+  display:inline-block;margin-top:12px;padding:8px 20px;
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  color:#0b0f1a;font-weight:700;border-radius:8px;font-size:0.84rem;
+  cursor:pointer;border:none;
+}
+.browse-btn:hover{opacity:.87;}
+
+/* ─── PROGRESS ───────────────────────────── */
+#progress-wrap{max-width:960px;margin:0 auto 16px;display:none;}
+.prog-label{font-size:0.76rem;color:var(--muted);margin-bottom:4px;}
+.prog-bg{background:var(--bg3);border-radius:999px;height:5px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#38bdf8,#818cf8);border-radius:999px;transition:width .2s;width:0%;}
+
+/* ─── SECTION TITLE ──────────────────────── */
+.sec-title{
+  max-width:960px;margin:0 auto 10px;
+  font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);display:flex;align-items:center;gap:8px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ─── GLOBAL STATS BAR ───────────────────── */
+#global-stats{
+  max-width:960px;margin:0 auto 8px;
+  display:none;gap:12px;flex-wrap:wrap;
+}
+.gstat{
+  flex:1;min-width:130px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 16px;text-align:center;
+}
+.gstat-val{font-size:1.5rem;font-weight:800;}
+.gstat-lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+.gstat.dv01 .gstat-val{color:var(--dv01);}
+.gstat.pu01 .gstat-val{color:var(--pu01);}
+.gstat.pu02 .gstat-val{color:var(--pu02);}
+.gstat.total .gstat-val{color:#e2e8f0;}
+#kpi-subtitle{
+  max-width:960px;margin:0 auto 20px;
+  color:var(--muted);font-size:0.82rem;display:none;
+}
+
+/* ─── CALENDAR ───────────────────────────── */
+#calendar-wrap{
+  max-width:960px;margin:0 auto 24px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:14px;
+  overflow:hidden;display:none;
+}
+.cal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border2);background:var(--bg2);
+}
+.cal-nav-btn{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  border-radius:8px;padding:6px 14px;font-size:0.84rem;cursor:pointer;transition:all .2s;
+}
+.cal-nav-btn:hover{background:var(--bg4);border-color:#38bdf8;color:#38bdf8;}
+.cal-month-label{font-size:1.05rem;font-weight:700;color:var(--text);}
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted);}
+.cal-leg-dot{width:8px;height:8px;border-radius:50%;}
+
+.cal-grid-header{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  background:var(--bg2);border-bottom:1px solid var(--border2);
+}
+.cal-dow{
+  padding:8px;text-align:center;font-size:0.68rem;
+  font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+
+.cal-cell{
+  min-height:110px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:8px;cursor:pointer;transition:background .15s;position:relative;overflow:hidden;
+}
+.cal-cell:nth-child(7n){border-right:none;}
+.cal-cell:hover{background:rgba(56,189,248,.05);}
+.cal-cell.today{background:rgba(56,189,248,.06);}
+.cal-cell.today::after{
+  content:'today';position:absolute;top:4px;right:6px;
+  font-size:0.6rem;color:#38bdf8;text-transform:uppercase;letter-spacing:.05em;
+}
+.cal-cell.has-data{cursor:pointer;}
+.cal-cell.has-data:hover{background:rgba(56,189,248,.08);}
+.cal-cell.selected{background:rgba(129,140,248,.1);border-color:rgba(129,140,248,.3);}
+.cal-cell.other-month{opacity:.3;}
+
+.cell-date{
+  font-size:0.82rem;font-weight:700;color:#94a3b8;margin-bottom:5px;
+}
+.cal-cell.today .cell-date{color:#38bdf8;}
+.cal-cell.has-data .cell-date{color:var(--text);}
+
+.cell-type-rows{margin-top:2px;}
+.type-row{
+  display:flex;align-items:center;gap:4px;
+  font-size:0.67rem;margin-bottom:2px;
+}
+.type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.type-label{color:var(--muted);min-width:28px;}
+.type-val{font-weight:700;font-size:0.7rem;}
+.type-val.dv01{color:var(--dv01);}
+.type-val.pu01{color:var(--pu01);}
+.type-val.pu02{color:var(--pu02);}
+
+.cell-total{
+  margin-top:5px;padding-top:4px;border-top:1px solid var(--border2);
+  font-size:0.68rem;color:var(--muted);display:flex;justify-content:space-between;
+}
+.cell-total-val{color:var(--text);font-weight:700;}
+
+.cell-unsaved-dot{
+  position:absolute;top:6px;left:6px;
+  width:6px;height:6px;border-radius:50%;background:#f59e0b;
+}
+
+/* ─── DATE DETAIL PANEL ──────────────────── */
+#detail-panel{
+  max-width:960px;margin:0 auto 22px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:14px;
+  display:none;overflow:hidden;
+}
+.detail-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border2);gap:12px;flex-wrap:wrap;
+}
+.detail-date-label{font-size:1rem;font-weight:700;color:var(--text);}
+.detail-status{font-size:0.75rem;}
+.saved-badge{color:#22c55e;background:#052e16;border-radius:6px;padding:2px 8px;}
+.unsaved-badge{color:#f59e0b;background:#431407;border-radius:6px;padding:2px 8px;}
+.saved-session-badge{color:#38bdf8;background:#082f49;border-radius:6px;padding:2px 8px;}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.det-btn{
+  padding:7px 14px;border-radius:8px;border:none;
+  font-size:0.78rem;font-weight:700;cursor:pointer;transition:opacity .2s;
+}
+.det-btn:hover{opacity:.82;}
+.btn-save-date{background:#22c55e;color:#fff;}
+.btn-del-date{background:#ef4444;color:#fff;}
+.btn-close-det{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);}
+
+.detail-body{padding:18px 20px;}
+.detail-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:18px;}
+.det-type-card{
+  background:var(--bg4);border-radius:10px;padding:14px 16px;
+  border-left:3px solid;
+}
+.det-type-card.dv01{border-color:var(--dv01);}
+.det-type-card.pu01{border-color:var(--pu01);}
+.det-type-card.pu02{border-color:var(--pu02);}
+.det-type-name{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.det-type-card.dv01 .det-type-name{color:var(--dv01);}
+.det-type-card.pu01 .det-type-name{color:var(--pu01);}
+.det-type-card.pu02 .det-type-name{color:var(--pu02);}
+.det-rows-val{font-size:1.8rem;font-weight:800;color:var(--text);line-height:1;}
+.det-rows-sub{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+.det-tmpl-list{margin-top:10px;border-top:1px solid var(--border2);padding-top:8px;}
+.det-tmpl-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:3px 0;font-size:0.72rem;
+}
+.det-tmpl-name{font-family:'Courier New',monospace;color:#94a3b8;}
+.det-tmpl-rows{font-weight:700;color:var(--text);}
+
+/* file history */
+.file-history-title{
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--border2);
+  font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+}
+#det-file-list{display:grid;gap:10px;margin-top:12px;}
+.file-history-card{
+  background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;
+}
+.file-history-top{
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;
+}
+.file-history-name{
+  font-family:'Courier New',monospace;font-size:0.78rem;color:#e2e8f0;word-break:break-all;
+}
+.file-history-meta{
+  margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:0.68rem;color:var(--muted);
+}
+.meta-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 8px;border-radius:999px;background:#111827;border:1px solid var(--border2);
+}
+.source-pill.saved{background:#052e16;color:#86efac;border-color:#166534;}
+.source-pill.session{background:#431407;color:#fcd34d;border-color:#92400e;}
+.source-pill.legacy{background:#1e1b4b;color:#c4b5fd;border-color:#4c1d95;}
+
+/* ─── SAVE ALL BANNER ────────────────────── */
+#save-banner{
+  max-width:960px;margin:0 auto 16px;
+  background:#1c1407;border:1px solid #78350f;border-radius:10px;
+  padding:12px 18px;display:none;
+  align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.save-banner-text{font-size:0.84rem;color:#fcd34d;}
+.save-banner-text span{font-weight:700;}
+.btn-save-all{background:var(--ok);color:#fff;padding:8px 18px;border-radius:8px;border:none;font-weight:700;font-size:0.84rem;cursor:pointer;}
+.btn-save-all:hover{opacity:.87;}
+
+/* ─── CONTROLS ───────────────────────────── */
+.controls{
+  max-width:960px;margin:0 auto 12px;
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+.ctrl-btn{
+  padding:7px 14px;border-radius:8px;border:none;
+  font-size:0.8rem;font-weight:600;cursor:pointer;transition:opacity .2s;
+}
+.ctrl-btn:hover{opacity:.82;}
+.btn-clear{background:#ef4444;color:#fff;}
+.btn-export-files{background:#22c55e;color:#fff;}
+.btn-export-tmpl{background:#818cf8;color:#0b0f1a;}
+.btn-export-cal{background:var(--dv01);color:#0b0f1a;}
+.stats-badge{
+  margin-left:auto;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;padding:5px 12px;font-size:0.76rem;color:#94a3b8;
+}
+.stats-badge span{color:#38bdf8;font-weight:700;}
+
+/* ─── SEARCH ─────────────────────────────── */
+.search-wrap{max-width:960px;margin:0 auto 12px;display:none;}
+.search-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);padding:9px 14px;font-size:0.84rem;outline:none;
+}
+.search-input:focus{border-color:#38bdf8;}
+.search-input::placeholder{color:var(--muted2);}
+
+/* ─── TEMPLATE CARDS ─────────────────────── */
+#tmpl-section{max-width:960px;margin:0 auto 22px;display:none;}
+.tmpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
+.tmpl-card{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
+  padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.tmpl-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;}
+.tmpl-card:hover,.tmpl-card.active{border-color:#38bdf8;background:#1a2f4a;}
+.tmpl-id{font-family:'Courier New',monospace;font-size:0.74rem;color:#94a3b8;margin-bottom:8px;}
+.tmpl-id b{color:#38bdf8;}
+.tmpl-type-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.tmpl-type-pill{
+  font-size:0.64rem;font-weight:700;padding:1px 7px;border-radius:4px;
+  text-transform:uppercase;
+}
+.pill-dv01{background:#431407;color:var(--dv01);}
+.pill-pu01{background:#0c2a3f;color:var(--pu01);}
+.pill-pu02{background:#2e1065;color:var(--pu02);}
+.tmpl-stats-row{display:flex;gap:14px;}
+.tmpl-stat{text-align:center;}
+.tmpl-stat-val{font-size:1.3rem;font-weight:800;color:var(--text);}
+.tmpl-stat-lbl{font-size:0.62rem;color:var(--muted);margin-top:1px;}
+.tmpl-divider{width:1px;background:var(--border2);}
+.tmpl-bar-bg{background:var(--bg4);border-radius:999px;height:3px;overflow:hidden;margin-top:8px;}
+.tmpl-bar-fill{height:100%;border-radius:999px;transition:width .5s;}
+
+/* ─── FILE TABLE ─────────────────────────── */
+.table-outer{max-width:960px;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.4);}
+table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+thead{background:var(--bg3);}
+thead th{
+  padding:11px 14px;text-align:left;font-size:0.7rem;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border2);
+  cursor:pointer;user-select:none;white-space:nowrap;
+}
+thead th:hover{color:#38bdf8;}
+.sort-arrow{margin-left:3px;opacity:.4;font-size:.7rem;}
+thead th.sorted .sort-arrow{opacity:1;color:#38bdf8;}
+tbody tr{background:var(--bg4);border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:nth-child(even){background:#111827;}
+tbody tr:hover{background:#1a2742;}
+tbody td{padding:9px 14px;vertical-align:middle;}
+tbody tr.grp-header{background:#141d2e !important;border-top:2px solid var(--border2);}
+tbody tr.grp-header td{padding:7px 14px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+.grp-tmpl-label{color:#38bdf8 !important;}
+.grp-total-label{color:#818cf8 !important;text-align:right;}
+
+.col-n{width:40px;text-align:center;color:var(--muted2);font-size:0.72rem;}
+.col-tmpl{width:120px;}
+.tmpl-pill{
+  display:inline-block;padding:1px 7px;border-radius:4px;
+  font-size:0.67rem;font-weight:700;font-family:'Courier New',monospace;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;
+}
+.col-type{width:68px;text-align:center;}
+.type-badge{
+  display:inline-block;padding:2px 8px;border-radius:5px;
+  font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+}
+.type-badge.dv01{background:#431407;color:var(--dv01);}
+.type-badge.pu01{background:#0c2a3f;color:var(--pu01);}
+.type-badge.pu02{background:#2e1065;color:var(--pu02);}
+.type-badge.unknown{background:#1e293b;color:#94a3b8;}
+.col-date{width:96px;font-size:0.76rem;color:#94a3b8;}
+.col-filename{font-family:'Courier New',monospace;color:var(--text);font-size:0.8rem;word-break:break-all;}
+.col-ext{width:60px;}
+.ext-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;text-transform:uppercase;}
+.ext-csv{background:#064e3b;color:#6ee7b7;}
+.ext-xlsx,.ext-xls{background:#1e3a5f;color:#7dd3fc;}
+.ext-txt{background:#374151;color:#d1d5db;}
+.ext-other{background:#3b0764;color:#d8b4fe;}
+.col-rows{width:100px;text-align:right;}
+.row-count{font-size:0.94rem;font-weight:700;color:#38bdf8;}
+.row-sub{font-size:0.64rem;color:var(--muted);}
+.col-status{width:110px;text-align:center;}
+.status-ok{display:inline-block;background:#052e16;color:#86efac;border-radius:999px;padding:1px 8px;font-size:0.65rem;font-weight:600;}
+.status-err{display:inline-block;background:#450a0a;color:#fca5a5;border-radius:999px;padding:1px 8px;font-size:0.65rem;font-weight:600;}
+.status-loading{display:inline-block;background:#1c1917;color:#a8a29e;border-radius:999px;padding:1px 8px;font-size:0.65rem;animation:pulse 1s infinite;}
+.status-saved{display:inline-block;background:#052e16;color:#86efac;border-radius:999px;padding:1px 8px;font-size:0.65rem;font-weight:600;}
+.status-session{display:inline-block;background:#431407;color:#fcd34d;border-radius:999px;padding:1px 8px;font-size:0.65rem;font-weight:600;}
+.status-legacy{display:inline-block;background:#1e1b4b;color:#c4b5fd;border-radius:999px;padding:1px 8px;font-size:0.65rem;font-weight:600;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+tfoot td{background:var(--bg3);padding:10px 14px;border-top:2px solid var(--border2);font-weight:700;color:#cbd5e1;}
+.total-rows{text-align:right;font-size:.95rem;color:#818cf8;}
+
+#main-table-wrap{max-width:960px;margin:0 auto;display:none;}
+#empty-state{text-align:center;padding:48px 20px;color:var(--border2);font-size:.9rem;max-width:960px;margin:0 auto;display:none;}
+#empty-state .ei{font-size:2.6rem;margin-bottom:10px;display:block;}
+
+/* ─── SOCIAL LINKS ───────────────────────── */
+.social-links{
+  display:flex;justify-content:center;gap:14px;margin-top:12px;flex-wrap:wrap;
+}
+.social-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 16px;border-radius:999px;font-size:0.78rem;font-weight:700;
+  text-decoration:none;transition:all .25s;border:1px solid transparent;
+}
+.social-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4);}
+.social-btn.linkedin{
+  background:rgba(10,102,194,.15);border-color:rgba(10,102,194,.45);color:#58b3f7;
+}
+.social-btn.linkedin:hover{background:rgba(10,102,194,.28);border-color:#0a66c2;color:#93d0ff;}
+.social-btn.instagram{
+  background:rgba(225,48,108,.12);border-color:rgba(225,48,108,.38);color:#f77fbf;
+}
+.social-btn.instagram:hover{
+  background:rgba(225,48,108,.24);border-color:#e1306c;color:#ffaacc;
+}
+.social-btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0;}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ─── TOAST ──────────────────────────────── */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:#1e293b;border:1px solid var(--border2);border-radius:10px;
+  padding:10px 20px;font-size:0.84rem;color:var(--text);
+  transition:transform .3s ease,opacity .3s ease;opacity:0;z-index:9999;
+  white-space:nowrap;pointer-events:none;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-header">
+  <h1>DPK - CSV Row Counter For SMS Files</h1>
+  <p>Try To Push Your Limit</p>
+  <div class="social-links">
+    <a class="social-btn linkedin"
+       href="https://www.linkedin.com/in/deepakkumardk02/"
+       target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+      </svg>
+      LinkedIn
+    </a>
+    <a class="social-btn instagram"
+       href="https://www.instagram.com/deepakkumardk02"
+       target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+      </svg>
+      Instagram
+    </a>
+  </div>
+</div>
+
+<!-- DROP ZONE -->
+<div id="drop-zone">
+  <span class="drop-icon">📂</span>
+  <div class="drop-title">Drop DV01 / PU01 / PU02 files here</div>
+  <div class="drop-hint">
+    Supported: .csv · .txt · .tsv · .xlsx · .xls
+  </div>
+  <label class="browse-btn" for="file-input">Browse Files</label>
+  <input type="file" id="file-input" multiple accept=".csv,.txt,.tsv,.xlsx,.xls"/>
+</div>
+
+<!-- PROGRESS -->
+<div id="progress-wrap">
+  <div class="prog-label" id="prog-label">Processing…</div>
+  <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+</div>
+
+<!-- SAVE BANNER -->
+<div id="save-banner">
+  <div class="save-banner-text">⚠️ You have <span id="unsaved-count">0</span> unsaved date(s). Save to persist across sessions.</div>
+  <button class="btn-save-all" onclick="saveAllToStorage()">💾 Save All</button>
+</div>
+
+<!-- GLOBAL STATS -->
+<div id="global-stats">
+  <div class="gstat dv01"><div class="gstat-val" id="gs-dv01">0</div><div class="gstat-lbl">DV01 Monthly Rows</div></div>
+  <div class="gstat pu01"><div class="gstat-val" id="gs-pu01">0</div><div class="gstat-lbl">PU01 Monthly Rows</div></div>
+  <div class="gstat pu02"><div class="gstat-val" id="gs-pu02">0</div><div class="gstat-lbl">PU02 Monthly Rows</div></div>
+  <div class="gstat total"><div class="gstat-val" id="gs-total">0</div><div class="gstat-lbl">Monthly Total Rows</div></div>
+</div>
+<div id="kpi-subtitle"></div>
+
+<!-- CALENDAR -->
+<div id="calendar-section" style="display:none">
+  <div class="sec-title">📅 Calendar View — click any date to inspect</div>
+  <div id="calendar-wrap">
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹ Prev</button>
+      <div>
+        <span class="cal-month-label" id="cal-month-label">March 2026</span>
+      </div>
+      <div class="cal-legend">
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:var(--dv01)"></div>DV01</div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:var(--pu01)"></div>PU01</div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:var(--pu02)"></div>PU02</div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#f59e0b"></div>Unsaved</div>
+      </div>
+      <button class="cal-nav-btn" onclick="calNav(1)">Next ›</button>
+    </div>
+    <div class="cal-grid-header">
+      <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div>
+      <div class="cal-dow">Tue</div><div class="cal-dow">Wed</div>
+      <div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
+      <div class="cal-dow">Sat</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+</div>
+
+<!-- DATE DETAIL PANEL -->
+<div id="detail-panel">
+  <div class="detail-header">
+    <div>
+      <div class="detail-date-label" id="det-date-label">—</div>
+    </div>
+    <div class="detail-actions">
+      <span class="detail-status" id="det-status-badge"></span>
+      <button class="det-btn btn-save-date" onclick="saveDateToStorage(selectedDate)">💾 Save Date</button>
+      <button class="det-btn btn-del-date" onclick="deleteDateFromStorage(selectedDate)">🗑 Delete Saved</button>
+      <button class="det-btn btn-close-det" onclick="closeDetail()">✕</button>
+    </div>
+  </div>
+  <div class="detail-body">
+    <div class="detail-type-grid" id="det-type-grid"></div>
+    <div id="det-template-break"></div>
+    <div class="file-history-title">🧾 File History</div>
+    <div id="det-file-list"></div>
+  </div>
+</div>
+
+<!-- TEMPLATE SECTION -->
+<div id="tmpl-section">
+  <div class="sec-title">🗂 Template Summary</div>
+  <div class="tmpl-grid" id="tmpl-grid"></div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls" id="controls" style="display:none">
+  <button class="ctrl-btn btn-export-files" onclick="exportFileCSV()">⬇ Files CSV</button>
+  <button class="ctrl-btn btn-export-tmpl" onclick="exportTemplateCSV()">⬇ Templates CSV</button>
+  <button class="ctrl-btn btn-export-cal" onclick="exportCalendarCSV()">⬇ Calendar CSV</button>
+  <button class="ctrl-btn btn-clear" onclick="clearAll()">✕ Clear Session</button>
+  <div class="stats-badge">
+    Templates: <span id="st-tmpl">0</span> &nbsp;|&nbsp;
+    Files: <span id="st-files">0</span> &nbsp;|&nbsp;
+    Rows: <span id="st-rows">0</span>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-wrap" id="search-wrap">
+  <input class="search-input" id="search-input" placeholder="🔍 Search file name, template, type or date…"/>
+</div>
+
+<!-- FILE TABLE -->
+<div id="main-table-wrap">
+  <div class="sec-title">📄 File Detail</div>
+  <div class="table-outer">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-n">#</th>
+          <th class="col-tmpl" onclick="sortBy('tmpl')">Template <span class="sort-arrow" id="arr-tmpl">↕</span></th>
+          <th class="col-type" onclick="sortBy('type')">Type <span class="sort-arrow" id="arr-type">↕</span></th>
+          <th class="col-date" onclick="sortBy('date')">Date <span class="sort-arrow" id="arr-date">↕</span></th>
+          <th onclick="sortBy('name')">File Name <span class="sort-arrow" id="arr-name">↕</span></th>
+          <th class="col-ext">Ext</th>
+          <th class="col-rows" onclick="sortBy('rows')">Rows <span class="sort-arrow" id="arr-rows">↕</span></th>
+          <th class="col-status">State</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6" style="color:var(--muted);font-size:.76rem;">Grand Total</td>
+          <td class="total-rows" id="grand-total">0</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<div id="empty-state"><span class="ei">🔎</span>No files match your search.</div>
+<div id="toast"></div>
+
+<script>
+/* ═════════════════════════════════════════════════════════════
+   CONSTANTS & STATE
+═════════════════════════════════════════════════════════════ */
+const TYPES = ['DV01','PU01','PU02'];
+const STORAGE_KEY = 'csv_dashboard_v4';
+const LEGACY_KEY  = 'csv_calendar_v3';
+
+const TYPE_COLOR = { DV01:'#f59e0b', PU01:'#38bdf8', PU02:'#a78bfa' };
+const PALETTE = ['#38bdf8','#818cf8','#34d399','#f472b6','#fb923c','#a78bfa','#4ade80','#facc15','#f87171','#2dd4bf'];
+
+let sessionFiles = [];
+let savedFiles   = [];
+let aggregates   = { byDate:{}, byMonth:{} };
+
+let sortCol      = null;
+let sortDir      = 1;
+let calYear      = new Date().getFullYear();
+let calMonth     = new Date().getMonth();
+let selectedDate = null;
+
+/* ═════════════════════════════════════════════════════════════
+   STORAGE
+═════════════════════════════════════════════════════════════ */
+function migrateLegacyData(){
+  const out = [];
+  try{
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if(!raw) return out;
+    const legacy = JSON.parse(raw);
+
+    for(const [dateKey, types] of Object.entries(legacy || {})){
+      for(const [fileType, bucket] of Object.entries(types || {})){
+        const templates = bucket?.templates || {};
+        for(const [template, tData] of Object.entries(templates)){
+          out.push({
+            id: `legacy__${dateKey}__${fileType}__${template}`,
+            fingerprint: `legacy__${dateKey}__${fileType}__${template}`,
+            name: `[Legacy] ${template}_${fileType}_${dateKey}`,
+            ext: 'legacy',
+            template,
+            dateKey,
+            fileType,
+            rows: Number(tData.rows || 0),
+            status: 'ok',
+            error: null,
+            source: 'saved',
+            legacy: true,
+            legacyFiles: Number(tData.files || 1),
+            savedAt: new Date().toISOString()
+          });
+        }
+      }
+    }
+  }catch(e){}
+  return out;
+}
+
+function loadStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      savedFiles = Array.isArray(parsed?.files) ? parsed.files : [];
+    }else{
+      savedFiles = migrateLegacyData();
+      if(savedFiles.length) writeStorage();
+    }
+  }catch(e){
+    savedFiles = [];
+  }
+}
+
+function writeStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ files: savedFiles }));
+  }catch(e){}
+}
+
+loadStorage();
+
+/* ═════════════════════════════════════════════════════════════
+   HELPERS
+═════════════════════════════════════════════════════════════ */
+function getAllFiles(){
+  return [...savedFiles, ...sessionFiles];
+}
+function recordFileCount(r){
+  return Number(r?.legacyFiles || 1);
+}
+function monthKeyFromDate(dateKey){
+  return dateKey ? dateKey.slice(0,7) : null;
+}
+function toDateKey(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatDateLabel(dk){
+  if(!dk) return '—';
+  const [y,m,d] = dk.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+function formatMonthLabel(year, monthIndex){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${months[monthIndex]} ${year}`;
+}
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+function extCls(e){ return ['csv'].includes(e)?'csv':['xlsx','xls'].includes(e)?'xlsx':['txt','tsv'].includes(e)?'txt':'other'; }
+function hexRgba(hex,a){
+  if(!hex || hex[0] !== '#') return `rgba(148,163,184,${a})`;
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function allDateKeys(){
+  return Object.keys(aggregates.byDate);
+}
+function hasSavedDate(dateKey){
+  return savedFiles.some(f => f.dateKey === dateKey);
+}
+function hasSessionDate(dateKey){
+  return sessionFiles.some(f => f.dateKey === dateKey);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   FILENAME PARSING
+═════════════════════════════════════════════════════════════ */
+function parseFilename(name){
+  const noExt = name.replace(/\.[^.]+$/,'');
+  const parts = noExt.split('_');
+
+  const template = parts[0] || 'UNKNOWN';
+
+  let dateKey = null;
+  for(const p of parts){
+    const m = p.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if(m){
+      const [,dd,mm,yyyy] = m;
+      dateKey = `${yyyy}-${mm}-${dd}`;
+      break;
+    }
+  }
+
+  let fileType = 'UNKNOWN';
+  for(const p of parts){
+    if(/^(DV|PU)\d{2}$/i.test(p)){
+      fileType = p.toUpperCase();
+      break;
+    }
+  }
+
+  return { template, dateKey, fileType };
+}
+
+/* ═════════════════════════════════════════════════════════════
+   DUPLICATE FINGERPRINT
+═════════════════════════════════════════════════════════════ */
+async function getFileFingerprint(file){
+  const buffer = await file.arrayBuffer();
+
+  if(!(window.crypto && crypto.subtle)){
+    return {
+      fingerprint: `${file.name.toLowerCase()}__${file.size}__${file.lastModified}`,
+      buffer
+    };
+  }
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray  = Array.from(new Uint8Array(hashBuffer));
+  const hashHex    = hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+
+  return { fingerprint: hashHex, buffer };
+}
+
+/* ═════════════════════════════════════════════════════════════
+   DROP / FILE HANDLING
+═════════════════════════════════════════════════════════════ */
+const zone      = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+zone.addEventListener('drop', e=>{
+  e.preventDefault();
+  zone.classList.remove('dragover');
+  handleFiles([...e.dataTransfer.files]);
+});
+fileInput.addEventListener('change', ()=> handleFiles([...fileInput.files]));
+
+async function handleFiles(files){
+  if(!files.length) return;
+
+  const supported = files.filter(f => /\.(csv|txt|tsv|xlsx|xls)$/i.test(f.name));
+  if(!supported.length){
+    showToast('⚠️ No supported files found');
+    return;
+  }
+
+  const pw = document.getElementById('progress-wrap');
+  const pf = document.getElementById('prog-fill');
+  const pl = document.getElementById('prog-label');
+
+  pw.style.display='block';
+  pf.style.width='0%';
+  pl.textContent='Checking duplicate files…';
+
+  const existingFingerprints = new Set(getAllFiles().map(f => f.fingerprint).filter(Boolean));
+  const batchFingerprints = new Set();
+  const prepared = [];
+  const duplicateNames = [];
+
+  for(let i=0;i<supported.length;i++){
+    const file = supported[i];
+    pl.textContent = `Checking ${i+1}/${supported.length}: ${file.name}`;
+    pf.style.width = `${Math.round(((i+1)/supported.length)*35)}%`;
+
+    try{
+      const { fingerprint, buffer } = await getFileFingerprint(file);
+
+      if(existingFingerprints.has(fingerprint) || batchFingerprints.has(fingerprint)){
+        duplicateNames.push(file.name);
+        continue;
+      }
+
+      batchFingerprints.add(fingerprint);
+
+      const parsed = parseFilename(file.name);
+      prepared.push({
+        file,
+        buffer,
+        entry: {
+          id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2,8)}`,
+          fingerprint,
+          name: file.name,
+          ext: file.name.split('.').pop().toLowerCase(),
+          template: parsed.template,
+          dateKey: parsed.dateKey,
+          fileType: parsed.fileType,
+          rows: null,
+          status: 'loading',
+          error: null,
+          source: 'session',
+          legacy: false,
+          savedAt: null
+        }
+      });
+    }catch(err){
+      duplicateNames.push(file.name);
+    }
+  }
+
+  if(!prepared.length){
+    pw.style.display='none';
+    showToast(duplicateNames.length ? `⚠️ ${duplicateNames.length} duplicate file(s) skipped` : '⚠️ No new file added');
+    fileInput.value='';
+    return;
+  }
+
+  sessionFiles.push(...prepared.map(x => x.entry));
+  showUI();
+  renderAll();
+
+  for(let i=0;i<prepared.length;i++){
+    const item = prepared[i];
+    pl.textContent = `Processing ${i+1}/${prepared.length}: ${item.file.name}`;
+    pf.style.width = `${35 + Math.round(((i+1)/prepared.length)*65)}%`;
+
+    try{
+      item.entry.rows = await countRowsFromBuffer(item.file, item.buffer);
+      item.entry.status = 'ok';
+    }catch(err){
+      item.entry.rows = 0;
+      item.entry.status = 'error';
+      item.entry.error = err.message || 'Read error';
+    }
+
+    renderAll();
+  }
+
+  pf.style.width='100%';
+  pl.textContent = `✅ Done — ${prepared.length} new file(s) processed.`;
+
+  const validDates = prepared.map(x => x.entry.dateKey).filter(Boolean).sort();
+  if(validDates.length){
+    const [y,m] = validDates[0].split('-').map(Number);
+    calYear = y;
+    calMonth = m - 1;
+  }
+
+  setTimeout(()=>{ pw.style.display='none'; }, 1500);
+  fileInput.value='';
+
+  if(duplicateNames.length){
+    showToast(`✅ ${prepared.length} added, ${duplicateNames.length} duplicate(s) skipped`);
+  }else{
+    showToast(`✅ ${prepared.length} file(s) processed successfully`);
+  }
+
+  renderAll();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   COUNT ROWS
+═════════════════════════════════════════════════════════════ */
+async function countRowsFromBuffer(file, buffer){
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  if(['xlsx','xls'].includes(ext)){
+    if(typeof XLSX === 'undefined'){
+      throw new Error('SheetJS not loaded yet');
+    }
+    const wb = XLSX.read(new Uint8Array(buffer), { type:'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1 }).filter(r => r.length > 0);
+    return Math.max(0, rows.length - 1);
+  }
+
+  const text = new TextDecoder().decode(buffer);
+  const lines = text.split(/\r\n|\r|\n/);
+  const nonEmpty = lines.filter((l,i)=>!(i===lines.length-1 && l.trim()===''));
+  return Math.max(0, nonEmpty.length);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   AGGREGATION
+═════════════════════════════════════════════════════════════ */
+function buildAggregates(){
+  const byDate = {};
+  const byMonth = {};
+
+  for(const r of getAllFiles()){
+    if(r.status !== 'ok' || !r.dateKey) continue;
+
+    const fileCount = recordFileCount(r);
+
+    if(!byDate[r.dateKey]) byDate[r.dateKey] = {};
+    if(!byDate[r.dateKey][r.fileType]){
+      byDate[r.dateKey][r.fileType] = { rows:0, files:0, templates:{}, fileDetails:[] };
+    }
+
+    const dBucket = byDate[r.dateKey][r.fileType];
+    dBucket.rows += (r.rows || 0);
+    dBucket.files += fileCount;
+    dBucket.fileDetails.push(r);
+
+    if(!dBucket.templates[r.template]) dBucket.templates[r.template] = { rows:0, files:0 };
+    dBucket.templates[r.template].rows += (r.rows || 0);
+    dBucket.templates[r.template].files += fileCount;
+
+    const monthKey = monthKeyFromDate(r.dateKey);
+    if(!byMonth[monthKey]){
+      byMonth[monthKey] = {
+        byType: { DV01:0, PU01:0, PU02:0 },
+        totalRows: 0,
+        totalFiles: 0,
+        dates: new Set(),
+        templates: new Set()
+      };
+    }
+
+    byMonth[monthKey].byType[r.fileType] = (byMonth[monthKey].byType[r.fileType] || 0) + (r.rows || 0);
+    byMonth[monthKey].totalRows += (r.rows || 0);
+    byMonth[monthKey].totalFiles += fileCount;
+    byMonth[monthKey].dates.add(r.dateKey);
+    byMonth[monthKey].templates.add(r.template);
+  }
+
+  aggregates = { byDate, byMonth };
+}
+
+/* ═════════════════════════════════════════════════════════════
+   RENDER ALL
+═════════════════════════════════════════════════════════════ */
+function renderAll(){
+  buildAggregates();
+  renderMonthlyKPI();
+  renderCalendar();
+  renderTemplateCards();
+  renderTable();
+  updateStats();
+  renderSaveBanner();
+  if(selectedDate) renderDetailPanel(selectedDate);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   MONTHLY KPI
+═════════════════════════════════════════════════════════════ */
+function renderMonthlyKPI(){
+  const gs = document.getElementById('global-stats');
+  const sub = document.getElementById('kpi-subtitle');
+
+  const monthKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const monthData = aggregates.byMonth[monthKey] || {
+    byType:{DV01:0,PU01:0,PU02:0},
+    totalRows:0,
+    totalFiles:0,
+    dates:new Set(),
+    templates:new Set()
+  };
+
+  const dv01 = monthData.byType.DV01 || 0;
+  const pu01 = monthData.byType.PU01 || 0;
+  const pu02 = monthData.byType.PU02 || 0;
+  const total = dv01 + pu01 + pu02;
+
+  document.getElementById('gs-dv01').textContent = dv01.toLocaleString();
+  document.getElementById('gs-pu01').textContent = pu01.toLocaleString();
+  document.getElementById('gs-pu02').textContent = pu02.toLocaleString();
+  document.getElementById('gs-total').textContent = total.toLocaleString();
+
+  if(getAllFiles().length){
+    gs.style.display = 'flex';
+    sub.style.display = 'block';
+    sub.textContent = `📊 KPI for ${formatMonthLabel(calYear, calMonth)} · ${monthData.totalFiles} file(s) · ${monthData.dates.size} active date(s) · ${monthData.templates.size} template(s)`;
+  }else{
+    gs.style.display = 'none';
+    sub.style.display = 'none';
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   SAVE BANNER
+═════════════════════════════════════════════════════════════ */
+function renderSaveBanner(){
+  const banner = document.getElementById('save-banner');
+  const unsavedDates = new Set(sessionFiles.filter(f => f.dateKey).map(f => f.dateKey));
+
+  if(unsavedDates.size){
+    document.getElementById('unsaved-count').textContent = unsavedDates.size;
+    banner.style.display = 'flex';
+  }else{
+    banner.style.display = 'none';
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   CALENDAR
+═════════════════════════════════════════════════════════════ */
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderCalendar(){
+  const calSection = document.getElementById('calendar-section');
+
+  if(getAllFiles().length===0){
+    calSection.style.display='none';
+    return;
+  }
+
+  calSection.style.display='block';
+  document.getElementById('calendar-wrap').style.display='block';
+  document.getElementById('cal-month-label').textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+  const todayKey = toDateKey(new Date());
+
+  for(let i=0;i<firstDay;i++){
+    const d = daysInPrev - firstDay + 1 + i;
+    const cell = makeCalCell(d, true, null, false, false);
+    grid.appendChild(cell);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dk = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayData = aggregates.byDate[dk] || {};
+    const hasData = Object.keys(dayData).length > 0;
+    const isToday = dk === todayKey;
+    const isSelected = dk === selectedDate;
+    const isUnsaved = hasSessionDate(dk);
+    const cell = makeCalCell(d, false, dk, isToday, isSelected, hasData, dayData, isUnsaved);
+    grid.appendChild(cell);
+  }
+
+  const total = firstDay + daysInMonth;
+  const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for(let i=1;i<=trailing;i++){
+    const cell = makeCalCell(i, true, null, false, false);
+    grid.appendChild(cell);
+  }
+}
+
+function makeCalCell(dayNum, otherMonth, dateKey, isToday, isSelected, hasData=false, merged={}, isUnsaved=false){
+  const cell = document.createElement('div');
+  let cls = 'cal-cell';
+  if(otherMonth) cls += ' other-month';
+  if(isToday) cls += ' today';
+  if(isSelected) cls += ' selected';
+  if(hasData) cls += ' has-data';
+  cell.className = cls;
+
+  if(dateKey && hasData) cell.addEventListener('click', ()=> openDetail(dateKey));
+
+  let inner = `<div class="cell-date">${dayNum}</div>`;
+  if(isUnsaved) inner += `<div class="cell-unsaved-dot" title="Unsaved session data"></div>`;
+
+  if(hasData){
+    inner += `<div class="cell-type-rows">`;
+    let grandTotal = 0;
+
+    for(const tp of TYPES){
+      if(merged[tp]){
+        const rows = merged[tp].rows || 0;
+        grandTotal += rows;
+        inner += `
+          <div class="type-row">
+            <div class="type-dot" style="background:${TYPE_COLOR[tp] || '#64748b'}"></div>
+            <span class="type-label">${tp}</span>
+            <span class="type-val ${tp.toLowerCase()}">${rows.toLocaleString()}</span>
+          </div>`;
+      }
+    }
+
+    inner += `</div>
+      <div class="cell-total">
+        <span>Total</span>
+        <span class="cell-total-val">${grandTotal.toLocaleString()}</span>
+      </div>`;
+  }
+
+  cell.innerHTML = inner;
+  return cell;
+}
+
+function calNav(dir){
+  calMonth += dir;
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  renderAll();
+}
+
+function openDetail(dk){
+  selectedDate = dk;
+  renderCalendar();
+  renderDetailPanel(dk);
+}
+
+function closeDetail(){
+  selectedDate = null;
+  document.getElementById('detail-panel').style.display='none';
+  renderCalendar();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   DETAIL PANEL
+═════════════════════════════════════════════════════════════ */
+function renderDetailPanel(dk){
+  const panel = document.getElementById('detail-panel');
+  const typeGrid = document.getElementById('det-type-grid');
+  const fileList = document.getElementById('det-file-list');
+  const breakEl  = document.getElementById('det-template-break');
+  const dayData  = aggregates.byDate[dk] || {};
+
+  panel.style.display = 'block';
+  document.getElementById('det-date-label').textContent = `📅 ${formatDateLabel(dk)}`;
+
+  const saved = hasSavedDate(dk);
+  const unsaved = hasSessionDate(dk);
+  const statusEl = document.getElementById('det-status-badge');
+
+  if(saved && unsaved) statusEl.innerHTML = '<span class="saved-session-badge">Saved + Unsaved Session</span>';
+  else if(saved) statusEl.innerHTML = '<span class="saved-badge">✓ Saved</span>';
+  else if(unsaved) statusEl.innerHTML = '<span class="unsaved-badge">⚠ Unsaved session</span>';
+  else statusEl.innerHTML = '';
+
+  typeGrid.innerHTML = '';
+  let grand = 0;
+
+  for(const tp of TYPES){
+    const d = dayData[tp];
+    if(!d) continue;
+
+    grand += (d.rows || 0);
+
+    const card = document.createElement('div');
+    card.className = `det-type-card ${tp.toLowerCase()}`;
+
+    let tmplRows = '';
+    for(const [tmplId, td] of Object.entries(d.templates || {}).sort((a,b)=>a[0].localeCompare(b[0]))){
+      tmplRows += `
+        <div class="det-tmpl-item">
+          <span class="det-tmpl-name">${escHtml(tmplId)}</span>
+          <span class="det-tmpl-rows">${(td.rows || 0).toLocaleString()}</span>
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="det-type-name">${tp}</div>
+      <div class="det-rows-val">${(d.rows || 0).toLocaleString()}</div>
+      <div class="det-rows-sub">${(d.files || 0)} file(s)</div>
+      ${tmplRows ? `<div class="det-tmpl-list">${tmplRows}</div>` : ''}`;
+    typeGrid.appendChild(card);
+  }
+
+  breakEl.innerHTML = `
+    <div style="text-align:right;padding-top:10px;border-top:1px solid var(--border2);font-size:.88rem;color:var(--muted);">
+      Grand Total: <strong style="color:#818cf8;font-size:1.1rem;">${grand.toLocaleString()}</strong> rows
+    </div>`;
+
+  const filesForDate = getAllFiles()
+    .filter(f => f.dateKey === dk && f.status === 'ok')
+    .sort((a,b)=>{
+      if(a.fileType !== b.fileType) return a.fileType.localeCompare(b.fileType);
+      if(a.template !== b.template) return a.template.localeCompare(b.template);
+      return a.name.localeCompare(b.name);
+    });
+
+  fileList.innerHTML = '';
+
+  if(!filesForDate.length){
+    fileList.innerHTML = `<div style="color:var(--muted);font-size:.82rem;">No files found for this date.</div>`;
+  }else{
+    filesForDate.forEach(f=>{
+      const sourceClass = f.legacy ? 'legacy' : (f.source === 'saved' ? 'saved' : 'session');
+      const sourceText = f.legacy ? 'Legacy Summary' : (f.source === 'saved' ? 'Saved' : 'Unsaved Session');
+
+      const item = document.createElement('div');
+      item.className = 'file-history-card';
+      item.innerHTML = `
+        <div class="file-history-top">
+          <div class="file-history-name">${escHtml(f.name)}</div>
+          <span class="type-badge ${String(f.fileType || '').toLowerCase()}">${escHtml(f.fileType || 'UNKNOWN')}</span>
+        </div>
+        <div class="file-history-meta">
+          <span class="meta-pill">Template: <strong>${escHtml(f.template || 'UNKNOWN')}</strong></span>
+          <span class="meta-pill">Rows: <strong>${(f.rows || 0).toLocaleString()}</strong></span>
+          <span class="meta-pill">Ext: <strong>.${escHtml(f.ext || '-')}</strong></span>
+          <span class="meta-pill source-pill ${sourceClass}">${sourceText}</span>
+          ${f.legacy ? `<span class="meta-pill">Legacy files: <strong>${recordFileCount(f)}</strong></span>` : ''}
+        </div>`;
+      fileList.appendChild(item);
+    });
+  }
+
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ═════════════════════════════════════════════════════════════
+   SAVE / DELETE
+═════════════════════════════════════════════════════════════ */
+function saveAllToStorage(){
+  const movable = sessionFiles.filter(f => f.status === 'ok' || f.status === 'error');
+  if(!movable.length){
+    showToast('ℹ️ No session files to save');
+    return;
+  }
+
+  for(const f of movable){
+    f.source = 'saved';
+    f.savedAt = new Date().toISOString();
+    savedFiles.push(f);
+  }
+
+  sessionFiles = [];
+  writeStorage();
+  renderAll();
+  showToast('💾 All session files saved successfully');
+}
+
+function saveDateToStorage(dk){
+  if(!dk) return;
+
+  const dateFiles = sessionFiles.filter(f => f.dateKey === dk);
+  if(!dateFiles.length){
+    showToast('ℹ️ No unsaved session data for this date');
+    return;
+  }
+
+  for(const f of dateFiles){
+    f.source = 'saved';
+    f.savedAt = new Date().toISOString();
+    savedFiles.push(f);
+  }
+
+  sessionFiles = sessionFiles.filter(f => f.dateKey !== dk);
+  writeStorage();
+  renderAll();
+  showToast(`✅ Saved: ${formatDateLabel(dk)}`);
+}
+
+function deleteDateFromStorage(dk){
+  if(!dk) return;
+
+  const hasSaved = savedFiles.some(f => f.dateKey === dk);
+  if(!hasSaved){
+    showToast('ℹ️ No saved data for this date');
+    return;
+  }
+
+  if(!confirm(`Delete saved data for ${formatDateLabel(dk)}?`)) return;
+
+  savedFiles = savedFiles.filter(f => f.dateKey !== dk);
+  writeStorage();
+
+  renderAll();
+  showToast(`🗑 Deleted saved data for ${formatDateLabel(dk)}`);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMPLATE CARDS
+═════════════════════════════════════════════════════════════ */
+function renderTemplateCards(){
+  const tmplSec = document.getElementById('tmpl-section');
+  const files = getAllFiles().filter(r => r.status === 'ok');
+
+  if(!files.length){
+    tmplSec.style.display='none';
+    return;
+  }
+
+  tmplSec.style.display='block';
+
+  const map = {};
+  for(const r of files){
+    if(!map[r.template]) map[r.template] = { totalRows:0, files:0, types:new Set(), dates:new Set() };
+    const t = map[r.template];
+    t.totalRows += (r.rows || 0);
+    t.files += recordFileCount(r);
+    t.types.add(r.fileType);
+    if(r.dateKey) t.dates.add(r.dateKey);
+  }
+
+  const maxRows = Math.max(...Object.values(map).map(t => t.totalRows), 1);
+  const allTmpls = Object.keys(map).sort();
+  const colorIdx = {}; allTmpls.forEach((t,i)=> colorIdx[t] = i);
+
+  const grid = document.getElementById('tmpl-grid');
+  grid.innerHTML = '';
+
+  for(const [tmpl, data] of Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0]))){
+    const color = PALETTE[colorIdx[tmpl] % PALETTE.length];
+    const pct = Math.round((data.totalRows / maxRows) * 100);
+    const card = document.createElement('div');
+    card.className = 'tmpl-card';
+    card.dataset.t = tmpl;
+
+    const pills = [...data.types].sort().map(tp=>`<span class="tmpl-type-pill pill-${tp.toLowerCase()}">${tp}</span>`).join('');
+    const datesHint = data.dates.size > 0 ? `<div style="font-size:.65rem;color:var(--muted);margin-top:6px">${data.dates.size} date(s)</div>` : '';
+
+    card.innerHTML = `
+      <div style="position:absolute;left:0;top:0;width:3px;height:100%;background:${color};"></div>
+      <div class="tmpl-id">Template: <b style="color:${color}">${escHtml(tmpl)}</b></div>
+      <div class="tmpl-type-pills">${pills}</div>
+      <div class="tmpl-stats-row">
+        <div class="tmpl-stat"><div class="tmpl-stat-val">${data.files}</div><div class="tmpl-stat-lbl">Files</div></div>
+        <div class="tmpl-divider"></div>
+        <div class="tmpl-stat"><div class="tmpl-stat-val" style="color:${color}">${data.totalRows.toLocaleString()}</div><div class="tmpl-stat-lbl">Rows</div></div>
+      </div>
+      ${datesHint}
+      <div class="tmpl-bar-bg"><div class="tmpl-bar-fill" style="width:${pct}%;background:${color}"></div></div>`;
+    grid.appendChild(card);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   FILE TABLE
+═════════════════════════════════════════════════════════════ */
+function renderTable(){
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+
+  let rows = getAllFiles().filter(r =>
+    (r.name || '').toLowerCase().includes(q) ||
+    (r.template || '').toLowerCase().includes(q) ||
+    (r.dateKey || '').toLowerCase().includes(q) ||
+    (r.fileType || '').toLowerCase().includes(q)
+  );
+
+  if(sortCol){
+    rows.sort((a,b)=>{
+      if(sortCol === 'name') return sortDir * String(a.name || '').localeCompare(String(b.name || ''));
+      if(sortCol === 'rows') return sortDir * ((a.rows || 0) - (b.rows || 0));
+      if(sortCol === 'tmpl') return sortDir * String(a.template || '').localeCompare(String(b.template || ''));
+      if(sortCol === 'type') return sortDir * String(a.fileType || '').localeCompare(String(b.fileType || ''));
+      if(sortCol === 'date') return sortDir * String(a.dateKey || '').localeCompare(String(b.dateKey || ''));
+      return 0;
+    });
+  } else {
+    rows.sort((a,b)=>{
+      const d = String(a.dateKey || '').localeCompare(String(b.dateKey || ''));
+      if(d !== 0) return d;
+      const t = String(a.fileType || '').localeCompare(String(b.fileType || ''));
+      if(t !== 0) return t;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  if(!rows.length && getAllFiles().length){
+    document.getElementById('empty-state').style.display = 'block';
+    document.getElementById('main-table-wrap').style.display = 'none';
+  } else if(!getAllFiles().length){
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('main-table-wrap').style.display = 'none';
+  } else {
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('main-table-wrap').style.display = 'block';
+
+    const allTmpls = [...new Set(getAllFiles().map(r => r.template))].sort();
+    const cIdx = {};
+    allTmpls.forEach((t,i)=> cIdx[t] = i);
+
+    let lastGrp = null;
+    let counter = 0;
+
+    rows.forEach(r=>{
+      const grpKey = `${r.dateKey || 'NO_DATE'}__${r.fileType}`;
+      if(grpKey !== lastGrp){
+        lastGrp = grpKey;
+
+        const grpRows = rows.filter(x => (x.dateKey || 'NO_DATE') === (r.dateKey || 'NO_DATE') && x.fileType === r.fileType);
+        const grpTotal = grpRows.reduce((s,x)=> s + (x.rows || 0), 0);
+        const typeColor = TYPE_COLOR[r.fileType] || '#64748b';
+
+        const tr = document.createElement('tr');
+        tr.className = 'grp-header';
+        tr.innerHTML = `
+          <td></td>
+          <td colspan="4" class="grp-tmpl-label" style="color:${typeColor}">
+            📅 ${formatDateLabel(r.dateKey || null)}
+            &nbsp;·&nbsp; <span style="color:${typeColor}">${escHtml(r.fileType || 'UNKNOWN')}</span>
+            <span style="color:var(--muted);font-weight:400;font-size:.65rem;margin-left:8px">${grpRows.reduce((a,x)=>a+recordFileCount(x),0)} file(s)</span>
+          </td>
+          <td></td>
+          <td class="grp-total-label" style="color:${typeColor}">${grpTotal.toLocaleString()}</td>
+          <td></td>`;
+        tbody.appendChild(tr);
+      }
+
+      counter++;
+      const color = PALETTE[cIdx[r.template] % PALETTE.length] || '#38bdf8';
+
+      let stateBadge = '';
+      if(r.status === 'loading'){
+        stateBadge = '<span class="status-loading">⏳ Loading</span>';
+      }else if(r.status === 'error'){
+        stateBadge = `<span class="status-err" title="${escHtml(r.error || '')}">✗ Error</span>`;
+      }else if(r.legacy){
+        stateBadge = '<span class="status-legacy">Legacy</span>';
+      }else if(r.source === 'saved'){
+        stateBadge = '<span class="status-saved">Saved</span>';
+      }else{
+        stateBadge = '<span class="status-session">Session</span>';
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-n">${counter}</td>
+        <td class="col-tmpl">
+          <span class="tmpl-pill" style="color:${color};background:${hexRgba(color,.08)};border:1px solid ${hexRgba(color,.25)}">${escHtml(r.template || 'UNKNOWN')}</span>
+        </td>
+        <td class="col-type">
+          <span class="type-badge ${String(r.fileType || 'unknown').toLowerCase()}">${escHtml(r.fileType || 'UNKNOWN')}</span>
+        </td>
+        <td class="col-date">${formatDateLabel(r.dateKey || null)}</td>
+        <td class="col-filename">${escHtml(r.name || '')}</td>
+        <td class="col-ext"><span class="ext-badge ext-${extCls(r.ext || '')}">.${escHtml(r.ext || '-')}</span></td>
+        <td class="col-rows">
+          ${r.status === 'loading'
+            ? '<span style="color:var(--muted2)">…</span>'
+            : `<span class="row-count">${(r.rows || 0).toLocaleString()}</span><div class="row-sub">${recordFileCount(r)} file(s)</div>`}
+        </td>
+        <td class="col-status">${stateBadge}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const grand = getAllFiles().filter(r => r.status === 'ok').reduce((s,r)=> s + (r.rows || 0), 0);
+  document.getElementById('grand-total').textContent = grand.toLocaleString() + ' rows';
+}
+
+/* ─── Stats ───────────────────────────────── */
+function updateStats(){
+  const okFiles = getAllFiles().filter(r => r.status === 'ok');
+  const tmpls = new Set(okFiles.map(r => r.template));
+
+  document.getElementById('st-tmpl').textContent = tmpls.size;
+  document.getElementById('st-files').textContent = okFiles.reduce((a,r)=>a + recordFileCount(r), 0);
+  document.getElementById('st-rows').textContent = okFiles.reduce((s,r)=> s + (r.rows || 0), 0).toLocaleString();
+
+  if(getAllFiles().length){
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('search-wrap').style.display = 'block';
+  }else{
+    document.getElementById('controls').style.display = 'none';
+    document.getElementById('search-wrap').style.display = 'none';
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   SORT
+═════════════════════════════════════════════════════════════ */
+function sortBy(col){
+  if(sortCol === col) sortDir *= -1;
+  else{
+    sortCol = col;
+    sortDir = 1;
+  }
+
+  ['name','rows','tmpl','type','date'].forEach(c=>{
+    const el = document.getElementById('arr-' + c);
+    if(!el) return;
+    el.textContent = c === sortCol ? (sortDir === 1 ? '↑' : '↓') : '↕';
+    if(el.closest('th')) el.closest('th').classList.toggle('sorted', c === sortCol);
+  });
+
+  renderTable();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   EXPORT
+═════════════════════════════════════════════════════════════ */
+function exportFileCSV(){
+  const rows = getAllFiles();
+  if(!rows.length){
+    showToast('ℹ️ No file data to export');
+    return;
+  }
+
+  let csv = 'No.,Template,Type,Date,File Name,Extension,Rows,Status,Source,Legacy,Fingerprint\n';
+  rows.forEach((r,i)=>{
+    const source = r.legacy ? 'legacy' : (r.source || 'session');
+    csv += [
+      i + 1,
+      `"${String(r.template || '').replace(/"/g,'""')}"`,
+      `"${String(r.fileType || '').replace(/"/g,'""')}"`,
+      `"${String(r.dateKey || '').replace(/"/g,'""')}"`,
+      `"${String(r.name || '').replace(/"/g,'""')}"`,
+      `"${String(r.ext || '').replace(/"/g,'""')}"`,
+      r.rows ?? '',
+      `"${String(r.status || '').replace(/"/g,'""')}"`,
+      `"${source}"`,
+      r.legacy ? 'YES' : 'NO',
+      `"${String(r.fingerprint || '').replace(/"/g,'""')}"`
+    ].join(',') + '\n';
+  });
+
+  dlCSV(csv, 'file_detail.csv');
+}
+
+function exportTemplateCSV(){
+  const okFiles = getAllFiles().filter(r => r.status === 'ok');
+  if(!okFiles.length){
+    showToast('ℹ️ No template data to export');
+    return;
+  }
+
+  const map = {};
+  for(const r of okFiles){
+    if(!map[r.template]) map[r.template] = { files:0, rows:0, types:new Set(), dates:new Set() };
+    map[r.template].files += recordFileCount(r);
+    map[r.template].rows += (r.rows || 0);
+    map[r.template].types.add(r.fileType);
+    if(r.dateKey) map[r.template].dates.add(r.dateKey);
+  }
+
+  let csv = 'No.,Template,Types,Dates,File Count,Total Rows\n';
+  Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([tm,d],i)=>{
+    csv += `${i+1},"${tm.replace(/"/g,'""')}","${[...d.types].sort().join('|')}","${[...d.dates].sort().join('|')}",${d.files},${d.rows}\n`;
+  });
+
+  dlCSV(csv, 'template_summary.csv');
+}
+
+function exportCalendarCSV(){
+  const dates = allDateKeys().sort();
+  if(!dates.length){
+    showToast('ℹ️ No calendar data to export');
+    return;
+  }
+
+  let csv = 'Date,Month,DV01 Rows,PU01 Rows,PU02 Rows,Total Rows,File Count,Saved Present,Unsaved Present\n';
+
+  dates.forEach(dk=>{
+    const day = aggregates.byDate[dk] || {};
+    const dv = day.DV01?.rows || 0;
+    const pu1 = day.PU01?.rows || 0;
+    const pu2 = day.PU02?.rows || 0;
+    const total = dv + pu1 + pu2;
+    const files = TYPES.reduce((a,tp)=> a + (day[tp]?.files || 0), 0);
+    csv += `${dk},${monthKeyFromDate(dk)},${dv},${pu1},${pu2},${total},${files},${hasSavedDate(dk) ? 'YES' : 'NO'},${hasSessionDate(dk) ? 'YES' : 'NO'}\n`;
+  });
+
+  dlCSV(csv, 'calendar_summary.csv');
+}
+
+function dlCSV(content, fname){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/csv;charset=utf-8;'}));
+  a.download = fname;
+  a.click();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   CLEAR SESSION
+═════════════════════════════════════════════════════════════ */
+function clearAll(){
+  if(!confirm('Clear current unsaved session files? Saved history will be preserved.')) return;
+
+  sessionFiles = [];
+  selectedDate = null;
+  sortCol = null;
+  sortDir = 1;
+
+  document.getElementById('detail-panel').style.display = 'none';
+  renderAll();
+  showToast('🗑 Unsaved session cleared. Saved history kept.');
+}
+
+/* ═════════════════════════════════════════════════════════════
+   SHOW UI
+═════════════════════════════════════════════════════════════ */
+function showUI(){
+  if(getAllFiles().length){
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('search-wrap').style.display = 'block';
+    document.getElementById('main-table-wrap').style.display = 'block';
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   TOAST
+═════════════════════════════════════════════════════════════ */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 2800);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   EVENTS
+═════════════════════════════════════════════════════════════ */
+document.getElementById('search-input').addEventListener('input', renderTable);
+
+/* ═════════════════════════════════════════════════════════════
+   INIT
+═════════════════════════════════════════════════════════════ */
+(function init(){
+  if(savedFiles.length){
+    const latest = savedFiles
+      .map(f => f.dateKey)
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    if(latest){
+      const [y,m] = latest.split('-').map(Number);
+      calYear = y;
+      calMonth = m - 1;
+    }
+
+    showUI();
+  }
+
+  renderAll();
+})();
+</script>
+
+<!-- SheetJS -->
+<script>
+(function(){
+  const s = document.createElement('script');
+  s.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
+  s.async = true;
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
